@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bucks2Bar</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+  />
+
+  <style>
+    body {
+      background-color: #f5f7fa;
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      color: #fff;
+      padding: 1.6rem 2rem;
+      border-radius: 0 0 1rem 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .app-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin: 0;
+    }
+
+    .app-header p {
+      margin: 0.25rem 0 0;
+      opacity: 0.7;
+      font-size: 0.9rem;
+    }
+
+    .nav-tabs .nav-link {
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .nav-tabs .nav-link.active {
+      color: #0f3460;
+      border-bottom: 3px solid #0f3460;
+    }
+
+    /* Numeric inputs — right-align, remove spinner arrows */
+    input[type="number"] {
+      text-align: right;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .net-positive { color: #198754; font-weight: 600; }
+    .net-negative { color: #dc3545; font-weight: 600; }
+    .net-zero     { color: #6c757d; font-weight: 600; }
+
+    tfoot td {
+      font-weight: 700;
+      background-color: #e9ecef;
+    }
+
+    #chart-container {
+      position: relative;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- App Header -->
+  <div class="app-header text-center">
+    <h1>&#8377; Bucks2Bar</h1>
+    <p>Track your monthly income &amp; expenses &mdash; visualised as a bar chart</p>
+  </div>
+
+  <div class="container pb-5">
+
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link active"
+          id="data-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#data-pane"
+          type="button"
+          role="tab"
+          aria-controls="data-pane"
+          aria-selected="true"
+        >&#128196; Data</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="chart-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#chart-pane"
+          type="button"
+          role="tab"
+          aria-controls="chart-pane"
+          aria-selected="false"
+        >&#128202; Chart</button>
+      </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="mainTabContent">
+
+      <!-- ── DATA TAB ── -->
+      <div
+        class="tab-pane fade show active"
+        id="data-pane"
+        role="tabpanel"
+        aria-labelledby="data-tab"
+      >
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0 text-secondary">Monthly Budget &mdash; FY 2026</h5>
+          <button class="btn btn-outline-danger btn-sm" id="resetBtn">&#8635; Reset All</button>
+        </div>
+
+        <div class="table-responsive shadow-sm rounded">
+          <table class="table table-bordered table-hover align-middle mb-0 bg-white" id="budgetTable">
+            <thead class="table-dark">
+              <tr>
+                <th style="width:12%">Month</th>
+                <th style="width:29%">Income (&#8377;)</th>
+                <th style="width:29%">Expense (&#8377;)</th>
+                <th style="width:30%">Net (&#8377;)</th>
+              </tr>
+            </thead>
+            <tbody id="budgetBody">
+              <!-- Rows injected by script.js -->
+            </tbody>
+            <tfoot>
+              <tr id="totalsRow">
+                <td>Totals</td>
+                <td id="totalIncome">&#8377; 0</td>
+                <td id="totalExpense">&#8377; 0</td>
+                <td id="totalNet" class="net-zero">&#8377; 0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div><!-- /data-pane -->
+
+      <!-- ── CHART TAB ── -->
+      <div
+        class="tab-pane fade"
+        id="chart-pane"
+        role="tabpanel"
+        aria-labelledby="chart-tab"
+      >
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0 text-secondary">Income vs Expense &mdash; Monthly Overview</h5>
+          <button class="btn btn-outline-primary btn-sm" id="downloadChartBtn">&#11123; Download PNG</button>
+        </div>
+        <div id="chart-container" class="shadow-sm p-3 bg-white rounded">
+          <canvas id="budgetChart"></canvas>
+        </div>
+      </div><!-- /chart-pane -->
+
+    </div><!-- /tab-content -->
+  <!-- Download Modal -->
+  <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="downloadModalLabel">Download Chart</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <label for="modalUsernameInput" class="form-label fw-semibold mb-1">Username</label>
+          <input
+            type="text"
+            class="form-control"
+            id="modalUsernameInput"
+            placeholder="Enter username"
+            aria-label="Username"
+            aria-describedby="modalUsernameHelp"
+          />
+          <div id="modalUsernameHelp" class="form-text">Min 3 characters &bull; at least one uppercase letter &bull; at least one special character</div>
+          <div class="invalid-feedback" id="modalUsernameFeedback"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn text-white" id="modalDownloadSubmitBtn" style="background-color:#e91e8c; border-color:#e91e8c;">Download</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS bundle (includes Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Chart.js 4 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- App Logic -->
+  <script src="script.js"></script>
+
+</body>
+</html>
